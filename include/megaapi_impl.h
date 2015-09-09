@@ -132,15 +132,24 @@ private:
     MegaLogger *megaLogger;
 };
 
-class MegaFolderUploadListener : public MegaRequestListener
+class MegaTransferPrivate;
+class MegaFolderUploadController : public MegaRequestListener
 {
 public:
-    MegaFolderUploadListener(MegaClient *client, string *localPath, MegaTransferListener *listener);
+    MegaFolderUploadController(MegaApiImpl *megaApi, MegaTransferPrivate *transfer);
+    void start();
 
 protected:
-    string localPath;
+    void onFolderAvailable(MegaHandle handle);
+
+    std::list<std::string> folders;
+    MegaApiImpl *megaApi;
     MegaClient *client;
+    const char* name;
+    handle parenthandle;
+    MegaTransferPrivate *transfer;
     MegaTransferListener *listener;
+    int recursive;
 
 public:
     virtual void onRequestFinish(MegaApi* api, MegaRequest *request, MegaError* e);
@@ -1145,6 +1154,13 @@ class MegaApiImpl : public MegaApp
         bool createThumbnail(const char* imagePath, const char *dstPath);
         bool createPreview(const char* imagePath, const char *dstPath);
 
+        void fireOnTransferStart(MegaTransferPrivate *transfer);
+        void fireOnTransferFinish(MegaTransferPrivate *transfer, MegaError e);
+        void fireOnTransferUpdate(MegaTransferPrivate *transfer);
+        void fireOnTransferTemporaryError(MegaTransferPrivate *transfer, MegaError e);
+
+        MegaClient *getMegaClient();
+
 protected:
         static const unsigned int MAX_SESSION_LENGTH;
 
@@ -1157,11 +1173,7 @@ protected:
         void fireOnRequestFinish(MegaRequestPrivate *request, MegaError e);
         void fireOnRequestUpdate(MegaRequestPrivate *request);
         void fireOnRequestTemporaryError(MegaRequestPrivate *request, MegaError e);
-        void fireOnTransferStart(MegaTransferPrivate *transfer);
-        void fireOnTransferFinish(MegaTransferPrivate *transfer, MegaError e);
-        void fireOnTransferUpdate(MegaTransferPrivate *transfer);
         bool fireOnTransferData(MegaTransferPrivate *transfer);
-        void fireOnTransferTemporaryError(MegaTransferPrivate *transfer, MegaError e);
         void fireOnUsersUpdate(MegaUserList *users);
         void fireOnNodesUpdate(MegaNodeList *nodes);
         void fireOnAccountUpdate();
